@@ -1,0 +1,13 @@
+{
+    "model_path": "yolov8n.pt",
+    "vehicle_classes": [2, 3, 5, 7],
+    "congestion_thresholds": {
+        "low": 5,
+        "medium": 15,
+        "high": 25
+    },
+    "speed_calibration_factor": 0.8,
+    "detection_interval": 2,
+    "output_video": true,
+    "log_data": true
+}

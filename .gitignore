@@ -1,0 +1,19 @@
+# Ignore Python cache
+__pycache__/
+*.pyc
+
+# Ignore virtual environments
+venv/
+traffic_env/
+
+# Ignore large/binary files
+*.mp4
+*.avi
+*.mov
+*.csv
+*.xlsx
+*.pt
+
+# Ignore OS/IDE files
+.DS_Store
+*.log

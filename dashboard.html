@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Urban Traffic Management System</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; }
+        .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        .stat-item { text-align: center; }
+        .stat-value { font-size: 24px; font-weight: bold; }
+        .stat-label { font-size: 14px; color: #666; }
+        .chart-container { position: relative; height: 300px; }
+        .control-panel { grid-column: 1 / -1; }
+        .signal-control { display: flex; gap: 10px; margin-bottom: 15px; }
+        .signal-control select, .signal-control input { padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        .signal-control button { padding: 8px 16px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .improvement { color: #4CAF50; font-weight: bold; }
+        .bottleneck-high { border-left: 4px solid #d32f2f; background: #ffebee; margin: 10px 0; padding: 10px; }
+        .bottleneck-medium { border-left: 4px solid #ff9800; background: #fff3e0; margin: 10px 0; padding: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Urban Traffic Management System</h1>
+    
+    <div class="dashboard">
+        <div class="card">
+            <h2>Current Traffic Statistics</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value" id="current-vehicles">0</div>
+                    <div class="stat-label">Current Vehicles</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="total-vehicles">0</div>
+                    <div class="stat-label">Total Vehicles Today</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="congestion-level">Low</div>
+                    <div class="stat-label">Congestion Level</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="avg-speed">0</div>
+                    <div class="stat-label">Avg Speed (km/h)</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value improvement" id="commute-reduction">0%</div>
+                    <div class="stat-label">Commute Time Reduction</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>Vehicle Distribution</h2>
+            <div class="chart-container">
+                <canvas id="vehicleChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>Traffic Over Time</h2>
+            <div class="chart-container">
+                <canvas id="trafficChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>Signal Status</h2>
+            <div id="signal-status">
+                <!-- Signal status will be populated by JavaScript -->
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>Bottleneck Predictions</h2>
+            <div id="bottleneck-predictions">
+                <!-- Will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>IoT Sensor Data</h2>
+            <div id="iot-data">
+                <!-- Will be populated by JavaScript -->
+            </div>
+        </div>
+        
+        <div class="card control-panel">
+            <h2>Manual Signal Control</h2>
+            <div class="signal-control">
+                <select id="intersection-select">
+                    <option value="0">Intersection 1</option>
+                    <option value="1">Intersection 2</option>
+                    <option value="2">Intersection 3</option>
+                    <option value="3">Intersection 4</option>
+                </select>
+                <select id="direction-select">
+                    <option value="0">North</option>
+                    <option value="1">East</option>
+                    <option value="2">South</option>
+                    <option value="3">West</option>
+                </select>
+                <input type="number" id="duration-input" value="30" min="10" max="120">
+                <button onclick="controlSignal()">Set Green Light</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize charts
+        const vehicleCtx = document.getElementById('vehicleChart').getContext('2d');
+        const vehicleChart = new Chart(vehicleCtx, {
+            type: 'pie',
+            data: {
+                labels: ['Cars', 'Motorbikes', 'Buses', 'Trucks'],
+                datasets: [{
+                    data: [0, 0, 0, 0],
+                    backgroundColor: ['#4CAF50', '#2196F3', '#FF9800', '#F44336']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+        
+        const trafficCtx = document.getElementById('trafficChart').getContext('2d');
+        const trafficChart = new Chart(trafficCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Vehicle Count',
+                    data: [],
+                    borderColor: '#4CAF50',
+                    tension: 0.1,
+                    fill: true,
+                    backgroundColor: 'rgba(76, 175, 80, 0.1)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        
+        // Update dashboard data
+        function updateDashboard() {
+            fetch('/api/current_stats')
+                .then(response => response.json())
+                .then(data => {
+                    if (Object.keys(data).length > 0) {
+                        document.getElementById('current-vehicles').textContent = data.current_vehicles;
+                        document.getElementById('total-vehicles').textContent = data.total_vehicles;
+                        document.getElementById('congestion-level').textContent = 
+                            ['Low', 'Medium', 'High'][data.congestion_level];
+                        document.getElementById('avg-speed').textContent = data.average_speed;
+                        
+                        // Update vehicle chart
+                        if (data.vehicle_types) {
+                            vehicleChart.data.datasets[0].data = [
+                                data.vehicle_types.car || 0,
+                                data.vehicle_types.motorbike || 0,
+                                data.vehicle_types.bus || 0,
+                                data.vehicle_types.truck || 0
+                            ];
+                            vehicleChart.update();
+                        }
+                        
+                        // Update signal status
+                        updateSignalStatus(data.signal_states, data.current_green);
+                    }
+                });
+                
+            fetch('/api/commute_reduction')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('commute-reduction').textContent = 
+                        data.reduction.toFixed(1) + '%';
+                });
+                
+            fetch('/api/historical_stats?limit=20')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.length > 0) {
+                        const labels = data.map(item => {
+                            const date = new Date(item.timestamp);
+                            return date.toLocaleTimeString();
+                        });
+                        const values = data.map(item => item.current_vehicles);
+                        
+                        trafficChart.data.labels = labels;
+                        trafficChart.data.datasets[0].data = values;
+                        trafficChart.update();
+                    }
+                });
+
+            // Add these new API calls for bottleneck predictions and IoT data
+            fetch('/api/bottleneck_predictions')
+                .then(response => response.json())
+                .then(data => {
+                    updateBottleneckPredictions(data);
+                });
+                
+            fetch('/api/iot_data')
+                .then(response => response.json())
+                .then(data => {
+                    updateIoTData(data);
+                });
+        }
+        
+        function updateSignalStatus(states, currentGreen) {
+            const container = document.getElementById('signal-status');
+            if (!states || !container) return;
+            
+            let html = '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">';
+
+            // Check if we have the new format (4 signals) or old format (16 signals)
+            const isNewFormat = states.length === 4;
+            if(isNewFormat){
+                // New format: 4 directions
+                for (let i = 0; i < states.length; i++) {
+                    const isGreen = states[i];
+                    html += `
+                        <div style="padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                            <div>Direction ${['North', 'East', 'South', 'West'][i]}</div>
+                            <div style="height: 20px; width: 20px; border-radius: 50%; 
+                                background-color: ${isGreen ? '#4CAF50' : '#F44336'};
+                                margin-top: 5px;"></div>
+                            ${i === currentGreen ? '<div style="color: green; font-weight: bold;">CURRENTLY GREEN</div>' : ''}
+                        </div>
+                    `;
+                }
+            }
+            else {
+                // Old format: 4 intersections × 4 directions
+                for (let i = 0; i < states.length; i++) {
+                    const isGreen = states[i];
+                    const intersection = Math.floor(i/4) + 1;
+                    const direction = i % 4;
+                    html += `
+                        <div style="padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                            <div>Intersection ${intersection} - ${['North', 'East', 'South', 'West'][direction]}</div>
+                            <div style="height: 20px; width: 20px; border-radius: 50%; 
+                                        background-color: ${isGreen ? '#4CAF50' : '#F44336'};
+                                        margin-top: 5px;"></div>
+                            ${i === currentGreen ? '<div style="color: green; font-weight: bold;">CURRENTLY GREEN</div>' : ''}
+                        </div>
+                    `;
+                }
+            }
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function updateBottleneckPredictions(predictionData) {
+            const container = document.getElementById('bottleneck-predictions');
+            if (!predictionData || !container) return;
+            
+            let html = '';
+            
+            if (predictionData.bottlenecks && predictionData.bottlenecks.length > 0) {
+                html += '<div style="color: #d32f2f; font-weight: bold;">Active Bottlenecks Detected:</div>';
+                predictionData.bottlenecks.forEach(bottleneck => {
+                    const severityClass = bottleneck.severity === 'high' ? 'bottleneck-high' : 'bottleneck-medium';
+                    html += `
+                        <div class="${severityClass}">
+                            <div><strong>${bottleneck.location}</strong> (${bottleneck.severity} severity)</div>
+                            <div>Expected delay: ${bottleneck.expected_delay}</div>
+                            <div>Recommendation: ${bottleneck.recommendation}</div>
+                        </div>
+                    `;
+                });
+            } else {
+                html = '<div style="color: #4CAF50;">No major bottlenecks predicted. Traffic flowing normally.</div>';
+            }
+            
+            container.innerHTML = html;
+        }
+
+        function updateIoTData(sensorData) {
+            const container = document.getElementById('iot-data');
+            if (!sensorData || !container) return;
+            
+            // Determine weather icon
+            let weatherIcon = '☀️'; // default
+            if (sensorData.weather === 'rain') weatherIcon = '🌧️';
+            if (sensorData.weather === 'fog') weatherIcon = '🌫️';
+            
+            // Determine road condition icon
+            let roadIcon = '🟢'; // default
+            if (sensorData.road_conditions === 'wet') roadIcon = '💧';
+            if (sensorData.road_conditions === 'icy') roadIcon = '❄️';
+            
+            // Determine air quality color
+            let airQualityColor = '#4CAF50'; // good
+            if (sensorData.air_quality > 100) airQualityColor = '#FF9800'; // moderate
+            if (sensorData.air_quality > 150) airQualityColor = '#F44336'; // poor
+            
+            const html = `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div>${weatherIcon} Weather: ${sensorData.weather}</div>
+                    <div>${roadIcon} Road: ${sensorData.road_conditions}</div>
+                    <div>🚑 Emergency: ${sensorData.emergency_vehicle ? 'Detected' : 'None'}</div>
+                    <div>🌬️ Air Quality: <span style="color: ${airQualityColor};">${sensorData.air_quality}</span></div>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+        }
+        
+        function controlSignal() {
+            const intersection = document.getElementById('intersection-select').value;
+            const direction = document.getElementById('direction-select').value;
+            const duration = document.getElementById('duration-input').value;
+            
+            fetch('/api/control_signal', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    intersection: parseInt(intersection),
+                    direction: parseInt(direction),
+                    duration: parseInt(duration)
+                })
+            });
+        }
+        
+        // Update dashboard every 5 seconds
+        setInterval(updateDashboard, 5000);
+        updateDashboard();
+    </script>
+</body>
+</html>
