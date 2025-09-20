@@ -3,341 +3,1466 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Urban Traffic Management System</title>
+    <title>Smart Traffic Management System</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; }
-        .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
-        .stat-item { text-align: center; }
-        .stat-value { font-size: 24px; font-weight: bold; }
-        .stat-label { font-size: 14px; color: #666; }
-        .chart-container { position: relative; height: 300px; }
-        .control-panel { grid-column: 1 / -1; }
-        .signal-control { display: flex; gap: 10px; margin-bottom: 15px; }
-        .signal-control select, .signal-control input { padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
-        .signal-control button { padding: 8px 16px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; }
-        .improvement { color: #4CAF50; font-weight: bold; }
-        .bottleneck-high { border-left: 4px solid #d32f2f; background: #ffebee; margin: 10px 0; padding: 10px; }
-        .bottleneck-medium { border-left: 4px solid #ff9800; background: #fff3e0; margin: 10px 0; padding: 10px; }
+        :root {
+            --primary-color: #1a365d;
+            --secondary-color: #2d3748;
+            --accent-color: #3182ce;
+            --success-color: #38a169;
+            --warning-color: #d69e2e;
+            --danger-color: #e53e3e;
+            --light-color: #f7fafc;
+            --dark-color: #2d3748;
+            --sidebar-width: 260px;
+            --header-height: 70px;
+            --border-radius: 12px;
+            --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.07), 0 1px 3px rgba(0, 0, 0, 0.06);
+            --hover-shadow: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body { 
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0; 
+            padding: 0;
+            background: #000000; /* Changed to black */
+            color: #2d3748;
+            min-height: 100vh;
+            display: flex;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--primary-color);
+            color: white;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            padding: 20px 0;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+        
+        .logo-container {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 20px;
+        }
+        
+        .logo i {
+            font-size: 24px;
+            color: #4299e1;
+        }
+        
+        .nav-menu {
+            flex: 1;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            margin: 6px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #cbd5e0;
+        }
+        
+        .nav-item:hover, .nav-item.active {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        
+        .nav-item i {
+            margin-right: 12px;
+            width: 24px;
+            text-align: center;
+        }
+        
+        .system-status-sidebar {
+            padding: 15px 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            margin: 15px;
+            font-size: 13px;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: var(--success-color);
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+        
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: 20px;
+        }
+        
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding: 15px 20px;
+            background: #1a202c; /* Darker background for header */
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+        }
+        
+        .page-title h1 {
+            color: white;
+            font-size: 24px;
+            font-weight: 700;
+        }
+        
+        .page-title p {
+            color: #cbd5e0;
+            font-size: 14px;
+            margin-top: 4px;
+        }
+        
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: #2d3748;
+            cursor: pointer;
+        }
+        
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+        
+        /* Dashboard Grid - UPDATED */
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 20px;
+        }
+        
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--hover-shadow);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .card-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .card-actions button {
+            background: none;
+            border: none;
+            color: #a0aec0;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 20px 15px;
+            border-radius: var(--border-radius);
+            background: linear-gradient(135deg, #f6f9fc 0%, #eef2f7 100%);
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-item:hover {
+            transform: scale(1.02);
+        }
+        
+        .stat-icon {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: var(--accent-color);
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            color: var(--primary-color);
+        }
+        
+        .stat-label {
+            font-size: 13px;
+            color: #718096;
+            font-weight: 500;
+        }
+        
+        /* Charts */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 15px;
+        }
+        
+        /* CCTV Feed */
+        .cctv-container {
+            grid-column: span 12;
+            background: white;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+        }
+        
+        .cctv-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .cctv-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .cctv-location {
+            font-size: 14px;
+            color: #718096;
+        }
+        
+        .cctv-feed {
+            width: 100%;
+            height: 450px;
+            background: #000;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+        }
+        
+        /* Signal Status */
+        .signal-status-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        
+        .signal-item {
+            padding: 20px;
+            border-radius: var(--border-radius);
+            background: linear-gradient(135deg, #f6f9fc 0%, #eef2f7 100%);
+            text-align: center;
+            transition: all 0.3s ease;
+            box-shadow: var(--card-shadow);
+            border-left: 4px solid #e2e8f0;
+        }
+        
+        .signal-item.active {
+            transform: translateY(-3px);
+            box-shadow: var(--hover-shadow);
+            border-left: 4px solid var(--success-color);
+            background: linear-gradient(135deg, #f0fff4 0%, #e6fffa 100%);
+        }
+        
+        .signal-direction {
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--primary-color);
+            font-size: 14px;
+        }
+        
+        .signal-indicator {
+            height: 30px;
+            width: 30px;
+            border-radius: 50%;
+            margin: 0 auto 12px;
+            transition: all 0.5s ease;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        
+        .signal-green {
+            background-color: var(--success-color);
+            box-shadow: 0 0 15px rgba(72, 187, 120, 0.5);
+        }
+        
+        .signal-red {
+            background-color: #cbd5e0;
+        }
+        
+        .signal-active {
+            font-weight: 600;
+            color: var(--success-color);
+            margin-top: 8px;
+            font-size: 12px;
+        }
+        
+        /* Bottleneck Predictions */
+        .bottleneck-container {
+            margin-top: 15px;
+        }
+        
+        .bottleneck-item {
+            padding: 16px;
+            border-radius: var(--border-radius);
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            box-shadow: var(--card-shadow);
+            transition: transform 0.3s ease;
+            border-left: 4px solid #e2e8f0;
+        }
+        
+        .bottleneck-item:hover {
+            transform: translateX(5px);
+        }
+        
+        .bottleneck-high {
+            background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
+            border-left: 4px solid var(--danger-color);
+        }
+        
+        .bottleneck-medium {
+            background: linear-gradient(135deg, #fffaf0 0%, #feebcb 100%);
+            border-left: 4px solid var(--warning-color);
+        }
+        
+        .bottleneck-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .bottleneck-location {
+            font-weight: 600;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .bottleneck-location i {
+            font-size: 16px;
+            color: inherit;
+        }
+        
+        .bottleneck-severity {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .severity-high {
+            background-color: var(--danger-color);
+            color: white;
+        }
+        
+        .severity-medium {
+            background-color: var(--warning-color);
+            color: white;
+        }
+        
+        .bottleneck-details {
+            font-size: 14px;
+            color: #4a5568;
+        }
+        
+        .bottleneck-recommendation {
+            font-style: italic;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px dashed #e2e8f0;
+            font-size: 13px;
+            color: #718096;
+        }
+        
+        /* Control Panel */
+        .control-panel-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 15px;
+        }
+        
+        .control-mode {
+            padding: 20px;
+            border-radius: var(--border-radius);
+            background: white;
+            text-align: center;
+            box-shadow: var(--card-shadow);
+            transition: all 0.3s ease;
+            border-top: 4px solid #e2e8f0;
+        }
+        
+        .control-mode:hover {
+            box-shadow: var(--hover-shadow);
+            transform: translateY(-3px);
+        }
+        
+        .control-mode h3 {
+            margin-bottom: 15px;
+            color: var(--primary-color);
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .mode-icon {
+            font-size: 32px;
+            margin-bottom: 15px;
+            color: #a0aec0;
+        }
+        
+        .mode-automatic {
+            border-top: 4px solid var(--accent-color);
+        }
+        
+        .mode-automatic .mode-icon {
+            color: var(--accent-color);
+        }
+        
+        .mode-manual {
+            border-top: 4px solid var(--warning-color);
+        }
+        
+        .mode-manual .mode-icon {
+            color: var(--warning-color);
+        }
+        
+        .mode-emergency {
+            border-top: 4px solid var(--danger-color);
+        }
+        
+        .mode-emergency .mode-icon {
+            color: var(--danger-color);
+        }
+        
+        .mode-status {
+            font-size: 14px;
+            margin: 10px 0;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            display: inline-block;
+        }
+        
+        .status-active {
+            background-color: rgba(56, 161, 105, 0.15);
+            color: var(--success-color);
+        }
+        
+        .status-inactive {
+            background-color: rgba(160, 174, 192, 0.15);
+            color: #a0aec0;
+        }
+        
+        .mode-timing {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 10px 0;
+            color: var(--primary-color);
+        }
+        
+        .mode-description {
+            font-size: 13px;
+            color: #718096;
+            margin-top: 10px;
+            line-height: 1.5;
+        }
+        
+        /* IoT Grid */
+        .iot-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        
+        .iot-item {
+            padding: 20px;
+            border-radius: var(--border-radius);
+            background: linear-gradient(135deg, #f6f9fc 0%, #eef2f7 100%);
+            text-align: center;
+            transition: transform 0.3s ease;
+            box-shadow: var(--card-shadow);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .iot-item:hover {
+            transform: translateY(-3px);
+        }
+        
+        .iot-icon {
+            font-size: 32px;
+            margin-bottom: 12px;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: rgba(66, 153, 225, 0.1);
+            color: var(--accent-color);
+        }
+        
+        .iot-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--primary-color);
+            font-size: 14px;
+        }
+        
+        .iot-value {
+            font-size: 18px;
+            font-weight: 700;
+        }
+        
+        /* Buttons */
+        .btn {
+            padding: 12px 20px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: var(--accent-color);
+            color: white;
+            box-shadow: 0 2px 4px rgba(66, 153, 225, 0.3);
+        }
+        
+        .btn-primary:hover {
+            background: #2b6cb0;
+            box-shadow: 0 4px 8px rgba(66, 153, 225, 0.4);
+        }
+        
+        .btn-danger {
+            background: var(--danger-color);
+            color: white;
+            box-shadow: 0 2px 4px rgba(229, 62, 62, 0.3);
+        }
+        
+        .btn-danger:hover {
+            background: #c53030;
+            box-shadow: 0 4px 8px rgba(229, 62, 62, 0.4);
+        }
+        
+        .btn-warning {
+            background: var(--warning-color);
+            color: white;
+            box-shadow: 0 2px 4px rgba(214, 158, 46, 0.3);
+        }
+        
+        .btn-warning:hover {
+            background: #b7791f;
+            box-shadow: 0 4px 8px rgba(214, 158, 46, 0.4);
+        }
+        
+        /* Forms */
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            font-size: 14px;
+            color: var(--secondary-color);
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+            font-size: 14px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            transition: all 0.3s;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.2);
+        }
+        
+        /* Notifications */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 20px;
+            border-radius: 8px;
+            color: white;
+            z-index: 1000;
+            opacity: 0;
+            transform: translateX(100px);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .notification.success {
+            background: var(--success-color);
+        }
+        
+        .notification.error {
+            background: var(--danger-color);
+        }
+        
+        .notification-icon {
+            font-size: 20px;
+        }
+        
+        /* Grid Layout - UPDATED */
+        .card-stats {
+            grid-column: span 8;
+        }
+        
+        .card-system-control {
+            grid-column: span 4;
+        }
+        
+        .card-chart-1 {
+            grid-column: span 6;
+        }
+        
+        .card-chart-2 {
+            grid-column: span 6;
+        }
+        
+        .card-signal {
+            grid-column: span 4;
+        }
+        
+        .card-bottleneck {
+            grid-column: span 4;
+        }
+        
+        .card-iot {
+            grid-column: span 4;
+        }
+        
+        .card-control {
+            grid-column: span 12;
+        }
+        
+        /* No bottlenecks */
+        .no-bottlenecks {
+            text-align: center;
+            padding: 30px;
+            color: var(--success-color);
+            font-weight: 600;
+            background-color: rgba(56, 161, 105, 0.1);
+            border-radius: var(--border-radius);
+            border: 1px dashed #38a169;
+        }
+        
+        .no-bottlenecks i {
+            font-size: 32px;
+            margin-bottom: 10px;
+            display: block;
+        }
+        
+        /* Animations */
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .dashboard {
+                grid-template-columns: repeat(6, 1fr);
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .card-stats,
+            .card-system-control,
+            .card-chart-1,
+            .card-chart-2,
+            .card-signal,
+            .card-bottleneck,
+            .card-iot {
+                grid-column: span 6;
+            }
+            
+            .control-panel-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                width: 80px;
+                overflow: hidden;
+            }
+            
+            .logo span, .nav-item span, .system-status-sidebar {
+                display: none;
+            }
+            
+            .logo {
+                justify-content: center;
+            }
+            
+            .nav-item {
+                justify-content: center;
+                padding: 15px;
+            }
+            
+            .nav-item i {
+                margin-right: 0;
+                font-size: 20px;
+            }
+            
+            .main-content {
+                margin-left: 80px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .signal-status-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .iot-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .cctv-feed {
+                height: 300px;
+            }
+            
+            .sidebar {
+                display: none;
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .dashboard-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .header-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .card-stats,
+            .card-system-control,
+            .card-chart-1,
+            .card-chart-2,
+            .card-signal,
+            .card-bottleneck,
+            .card-iot {
+                grid-column: span 6;
+            }
+        }
+        
+        /* Mobile menu button */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: white;
+            cursor: pointer;
+        }
+        
+        @media (max-width: 768px) {
+            .mobile-menu-btn {
+                display: block;
+            }
+        }
+        
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: #000000;
+                color: #e2e8f0;
+            }
+            
+            .card, .dashboard-header, .cctv-container {
+                background: #2d3748;
+                color: #e2e8f0;
+            }
+            
+            .card-title, .cctv-title, .stat-value, .signal-direction, .bottleneck-location, .iot-title {
+                color: #e2e8f0;
+            }
+            
+            .stat-label, .cctv-location, .mode-description, .bottleneck-details, .bottleneck-recommendation {
+                color: #a0aec0;
+            }
+            
+            .stat-item, .signal-item, .iot-item {
+                background: #2d3748;
+            }
+            
+            .form-control {
+                background: #2d3748;
+                border-color: #4a5568;
+                color: #e2e8f0;
+            }
+            
+            .user-profile {
+                background: #2d3748;
+            }
+        }
     </style>
 </head>
 <body>
-    <h1>Urban Traffic Management System</h1>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo-container">
+            <div class="logo">
+                <i class="fas fa-traffic-light"></i>
+                <span>TrafficIQ</span>
+            </div>
+        </div>
+        
+        <div class="nav-menu">
+            <div class="nav-item active">
+                <i class="fas fa-chart-dashboard"></i>
+                <span>Dashboard</span>
+            </div>
+            <div class="nav-item">
+                <i class="fas fa-video"></i>
+                <span>Cameras</span>
+            </div>
+            <div class="nav-item">
+                <i class="fas fa-traffic-light"></i>
+                <span>Signals</span>
+            </div>
+            <div class="nav-item">
+                <i class="fas fa-map-marked-alt"></i>
+                <span>Maps</span>
+            </div>
+            <div class="nav-item">
+                <i class="fas fa-chart-line"></i>
+                <span>Analytics</span>
+            </div>
+            <div class="nav-item">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </div>
+        </div>
+        
+        <div class="system-status-sidebar">
+            <p><span class="status-indicator"></span> System Online</p>
+            <p>Last updated: <span id="last-updated-sidebar">Just now</span></p>
+        </div>
+    </div>
     
-    <div class="dashboard">
-        <div class="card">
-            <h2>Current Traffic Statistics</h2>
-            <div class="stats-grid">
-                <div class="stat-item">
-                    <div class="stat-value" id="current-vehicles">0</div>
-                    <div class="stat-label">Current Vehicles</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="total-vehicles">0</div>
-                    <div class="stat-label">Total Vehicles Today</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="congestion-level">Low</div>
-                    <div class="stat-label">Congestion Level</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="avg-speed">0</div>
-                    <div class="stat-label">Avg Speed (km/h)</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value improvement" id="commute-reduction">0%</div>
-                    <div class="stat-label">Commute Time Reduction</div>
-                </div>
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="dashboard-header">
+            <div class="page-title">
+                <h1>Regional Traffic Dashboard</h1>
+                <p>Real-time monitoring and management of traffic signals</p>
             </div>
-        </div>
-        
-        <div class="card">
-            <h2>Vehicle Distribution</h2>
-            <div class="chart-container">
-                <canvas id="vehicleChart"></canvas>
-            </div>
-        </div>
-        
-        <div class="card">
-            <h2>Traffic Over Time</h2>
-            <div class="chart-container">
-                <canvas id="trafficChart"></canvas>
-            </div>
-        </div>
-        
-        <div class="card">
-            <h2>Signal Status</h2>
-            <div id="signal-status">
-                <!-- Signal status will be populated by JavaScript -->
-            </div>
-        </div>
-        
-        <div class="card">
-            <h2>Bottleneck Predictions</h2>
-            <div id="bottleneck-predictions">
-                <!-- Will be populated by JavaScript -->
+            
+            <div class="header-actions">
+                <div class="system-status">
+                    <span class="status-indicator"></span>
+                    System Online | Last updated: <span id="last-updated">Just now</span>
+                </div>
+                
+                <button class="mobile-menu-btn">
+                    <i class="fas fa-bars"></i>
+                </button>
+                
+                <div class="user-profile">
+                    <div class="user-avatar">AD</div>
+                    <div class="user-info">
+                        <div class="user-name">Admin User</div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="card">
-            <h2>IoT Sensor Data</h2>
-            <div id="iot-data">
-                <!-- Will be populated by JavaScript -->
+        <div id="notification" class="notification">
+            <i class="notification-icon fas fa-check-circle"></i>
+            <span class="notification-message"></span>
+        </div>
+
+        <div class="cctv-container">
+            <div class="cctv-header">
+                <div>
+                    <h2 class="cctv-title">Live Traffic Feed</h2>
+                    <div class="cctv-location">Bhubaneswar - Master Canteen Square</div>
+                </div>
+                <div class="cctv-actions">
+                    <button class="btn btn-primary">
+                        <i class="fas fa-expand"></i> Fullscreen
+                    </button>
+                </div>
+            </div>
+            <div class="cctv-feed">
+                <img id="cctv-video-feed" style="width: 100%; height: 100%; object-fit: cover;" 
+                     src="/video_feed/0" alt="Live Traffic Feed">
             </div>
         </div>
-        
-        <div class="card control-panel">
-            <h2>Manual Signal Control</h2>
-            <div class="signal-control">
-                <select id="intersection-select">
-                    <option value="0">Intersection 1</option>
-                    <option value="1">Intersection 2</option>
-                    <option value="2">Intersection 3</option>
-                    <option value="3">Intersection 4</option>
-                </select>
-                <select id="direction-select">
-                    <option value="0">North</option>
-                    <option value="1">East</option>
-                    <option value="2">South</option>
-                    <option value="3">West</option>
-                </select>
-                <input type="number" id="duration-input" value="30" min="10" max="120">
-                <button onclick="controlSignal()">Set Green Light</button>
+
+        <div class="dashboard">
+            <div class="card card-stats">
+                <div class="card-header">
+                    <h2 class="card-title">Current Traffic Statistics</h2>
+                    <div class="card-actions">
+                        <button><i class="fas fa-sync-alt"></i></button>
+                        <button><i class="fas fa-expand"></i></button>
+                    </div>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-icon"><i class="fas fa-car"></i></div>
+                        <div class="stat-value" id="current-vehicles">0</div>
+                        <div class="stat-label">Current Vehicles</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+                        <div class="stat-value" id="total-vehicles">0</div>
+                        <div class="stat-label">Total Vehicles Today</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon"><i class="fas fa-traffic-light"></i></div>
+                        <div class="stat-value" id="congestion-level">Low</div>
+                        <div class="stat-label">Congestion Level</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon"><i class="fas fa-tachometer-alt"></i></div>
+                        <div class="stat-value" id="avg-speed">0</div>
+                        <div class="stat-label">Avg Speed (km/h)</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon"><i class="fas fa-clock"></i></div>
+                        <div class="stat-value improvement" id="commute-reduction">0%</div>
+                        <div class="stat-label">Commute Time Reduction</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon"><i class="fas fa-bolt"></i></div>
+                        <div class="stat-value" id="signal-efficiency">0%</div>
+                        <div class="stat-label">Signal Efficiency</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card card-system-control">
+                <div class="card-header">
+                    <h2 class="card-title">System Control</h2>
+                    <div class="card-actions">
+                        <button><i class="fas fa-info-circle"></i></button>
+                    </div>
+                </div>
+                <button class="btn btn-danger" onclick="stopProcessing()" style="width: 100%; margin-bottom: 15px;">
+                    <i class="fas fa-stop-circle"></i> Stop All Processing
+                </button>
+                <div style="padding: 15px; background: #f7fafc; border-radius: 8px;">
+                    <h3 style="margin-bottom: 10px; color: var(--primary-color);">System Status</h3>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span>Video Analysis:</span>
+                        <span id="video-status" style="color: var(--success-color); font-weight: 600;">Active</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span>Data Processing:</span>
+                        <span id="data-status" style="color: var(--success-color); font-weight: 600;">Active</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Signal Control:</span>
+                        <span id="signal-control-status" style="color: var(--success-color); font-weight: 600;">Automatic</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card card-chart-1">
+                <div class="card-header">
+                    <h2 class="card-title">Vehicle Distribution</h2>
+                    <div class="card-actions">
+                        <button><i class="fas fa-download"></i></button>
+                        <button><i class="fas fa-expand"></i></button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="vehicleChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="card card-chart-2">
+                <div class="card-header">
+                    <h2 class="card-title">Traffic Over Time</h2>
+                    <div class="card-actions">
+                        <button><i class="fas fa-download"></i></button>
+                        <button><i class="fas fa-expand"></i></button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="trafficChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="card card-signal">
+                <div class="card-header">
+                    <h2 class="card-title">Signal Status</h2>
+                    <div class="card-actions">
+                        <button><i class="fas fa-sync-alt"></i></button>
+                    </div>
+                </div>
+                <div class="signal-status-grid" id="signal-status-container">
+                    <!-- Will be populated dynamically -->
+                </div>
+            </div>
+            
+            <div class="card card-bottleneck">
+                <div class="card-header">
+                    <h2 class="card-title">Bottleneck Predictions</h2>
+                    <div class="card-actions">
+                        <button><i class="fas fa-bell"></i></button>
+                    </div>
+                </div>
+                <div class="bottleneck-container" id="bottleneck-predictions">
+                    <div class="no-bottlenecks">
+                        <i class="fas fa-check-circle"></i>
+                        No traffic bottlenecks detected. Traffic flowing normally.
+                    </div>
+                </div>
+            </div>
+
+            <div class="card card-iot">
+                <div class="card-header">
+                    <h2 class="card-title">Road Condition Monitoring</h2>
+                    <div class="card-actions">
+                        <button><i class="fas fa-satellite-dish"></i></button>
+                    </div>
+                </div>
+                <div class="iot-grid">
+                    <div class="iot-item">
+                        <div class="iot-icon"><i class="fas fa-sun"></i></div>
+                        <div class="iot-title">Weather</div>
+                        <div class="iot-value" id="weather-value">Clear</div>
+                    </div>
+                    <div class="iot-item">
+                        <div class="iot-icon"><i class="fas fa-road"></i></div>
+                        <div class="iot-title">Road Conditions</div>
+                        <div class="iot-value" id="road-value">Dry</div>
+                    </div>
+                    <div class="iot-item">
+                        <div class="iot-icon"><i class="fas fa-ambulance"></i></div>
+                        <div class="iot-title">Emergency</div>
+                        <div class="iot-value" id="emergency-value">None</div>
+                    </div>
+                    <div class="iot-item">
+                        <div class="iot-icon"><i class="fas fa-wind"></i></div>
+                        <div class="iot-title">Air Quality</div>
+                        <div class="iot-value" id="air-value">Good</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card card-control">
+                <div class="card-header">
+                    <h2 class="card-title">Traffic Control Panel</h2>
+                    <div class="card-actions">
+                        <button><i class="fas fa-question-circle"></i></button>
+                    </div>
+                </div>
+                <div class="control-panel-grid">
+                    <div class="control-mode mode-automatic">
+                        <div class="mode-icon"><i class="fas fa-robot"></i></div>
+                        <h3>Automatic Mode</h3>
+                        <span class="mode-status status-active">Active</span>
+                        <div class="mode-timing">Adaptive</div>
+                        <div class="mode-description">
+                            System automatically adjusts signal timing based on real-time traffic conditions.
+                        </div>
+                        <button class="btn btn-primary" style="margin-top: 15px;">
+                            <i class="fas fa-cog"></i> Configure
+                        </button>
+                    </div>
+                    
+                    <div class="control-mode mode-manual">
+                        <div class="mode-icon"><i class="fas fa-sliders-h"></i></div>
+                        <h3>Manual Mode</h3>
+                        <span class="mode-status status-inactive">Inactive</span>
+                        <div class="mode-timing">Fixed Cycle</div>
+                        <div class="mode-description">
+                            Manually control signal timings and sequences for specific traffic conditions.
+                        </div>
+                        <button class="btn btn-warning" style="margin-top: 15px;">
+                            <i class="fas fa-play"></i> Activate
+                        </button>
+                    </div>
+                    
+                    <div class="control-mode mode-emergency">
+                        <div class="mode-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                        <h3>Emergency Mode</h3>
+                        <span class="mode-status status-inactive">Inactive</span>
+                        <div class="mode-timing">Priority</div>
+                        <div class="mode-description">
+                            Activate emergency protocols to prioritize emergency vehicles and clear routes.
+                        </div>
+                        <button class="btn btn-danger" style="margin-top: 15px;">
+                            <i class="fas fa-play"></i> Activate
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
+        // Initialize variables
+        let totalVehiclesCount = 0;
+        let startTime = new Date();
+        let trafficData = [];
+        let vehicleData = [0, 0, 0, 0, 0]; // Cars, Trucks, Motorcycles, Buses, Other
+        
         // Initialize charts
-        const vehicleCtx = document.getElementById('vehicleChart').getContext('2d');
-        const vehicleChart = new Chart(vehicleCtx, {
-            type: 'pie',
-            data: {
-                labels: ['Cars', 'Motorbikes', 'Buses', 'Trucks'],
-                datasets: [{
-                    data: [0, 0, 0, 0],
-                    backgroundColor: ['#4CAF50', '#2196F3', '#FF9800', '#F44336']
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false
+        function initCharts() {
+            // Get current time for labels (like admin_dashboard.html)
+            const now = new Date();
+            const timeLabels = [];
+            for (let i = 7; i >= 0; i--) {
+                const time = new Date(now);
+                time.setMinutes(time.getMinutes() - i * 15);
+                timeLabels.push(time.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}));
             }
-        });
-        
-        const trafficCtx = document.getElementById('trafficChart').getContext('2d');
-        const trafficChart = new Chart(trafficCtx, {
-            type: 'line',
-            data: {
-                labels: [],
-                datasets: [{
-                    label: 'Vehicle Count',
-                    data: [],
-                    borderColor: '#4CAF50',
-                    tension: 0.1,
-                    fill: true,
-                    backgroundColor: 'rgba(76, 175, 80, 0.1)'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-        
-        // Update dashboard data
-        function updateDashboard() {
-            fetch('/api/current_stats')
-                .then(response => response.json())
-                .then(data => {
-                    if (Object.keys(data).length > 0) {
-                        document.getElementById('current-vehicles').textContent = data.current_vehicles;
-                        document.getElementById('total-vehicles').textContent = data.total_vehicles;
-                        document.getElementById('congestion-level').textContent = 
-                            ['Low', 'Medium', 'High'][data.congestion_level];
-                        document.getElementById('avg-speed').textContent = data.average_speed;
-                        
-                        // Update vehicle chart
-                        if (data.vehicle_types) {
-                            vehicleChart.data.datasets[0].data = [
-                                data.vehicle_types.car || 0,
-                                data.vehicle_types.motorbike || 0,
-                                data.vehicle_types.bus || 0,
-                                data.vehicle_types.truck || 0
-                            ];
-                            vehicleChart.update();
-                        }
-                        
-                        // Update signal status
-                        updateSignalStatus(data.signal_states, data.current_green);
-                    }
-                });
-                
-            fetch('/api/commute_reduction')
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('commute-reduction').textContent = 
-                        data.reduction.toFixed(1) + '%';
-                });
-                
-            fetch('/api/historical_stats?limit=20')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.length > 0) {
-                        const labels = data.map(item => {
-                            const date = new Date(item.timestamp);
-                            return date.toLocaleTimeString();
-                        });
-                        const values = data.map(item => item.current_vehicles);
-                        
-                        trafficChart.data.labels = labels;
-                        trafficChart.data.datasets[0].data = values;
-                        trafficChart.update();
-                    }
-                });
 
-            // Add these new API calls for bottleneck predictions and IoT data
-            fetch('/api/bottleneck_predictions')
-                .then(response => response.json())
-                .then(data => {
-                    updateBottleneckPredictions(data);
-                });
-                
-            fetch('/api/iot_data')
-                .then(response => response.json())
-                .then(data => {
-                    updateIoTData(data);
-                });
-        }
-        
-        function updateSignalStatus(states, currentGreen) {
-            const container = document.getElementById('signal-status');
-            if (!states || !container) return;
-            
-            let html = '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">';
-
-            // Check if we have the new format (4 signals) or old format (16 signals)
-            const isNewFormat = states.length === 4;
-            if(isNewFormat){
-                // New format: 4 directions
-                for (let i = 0; i < states.length; i++) {
-                    const isGreen = states[i];
-                    html += `
-                        <div style="padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
-                            <div>Direction ${['North', 'East', 'South', 'West'][i]}</div>
-                            <div style="height: 20px; width: 20px; border-radius: 50%; 
-                                background-color: ${isGreen ? '#4CAF50' : '#F44336'};
-                                margin-top: 5px;"></div>
-                            ${i === currentGreen ? '<div style="color: green; font-weight: bold;">CURRENTLY GREEN</div>' : ''}
-                        </div>
-                    `;
-                }
+            // Initialize with some data
+            for (let i = 0; i < 8; i++) {
+                trafficData.push(Math.floor(Math.random() * 50) + 20);
             }
-            else {
-                // Old format: 4 intersections × 4 directions
-                for (let i = 0; i < states.length; i++) {
-                    const isGreen = states[i];
-                    const intersection = Math.floor(i/4) + 1;
-                    const direction = i % 4;
-                    html += `
-                        <div style="padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
-                            <div>Intersection ${intersection} - ${['North', 'East', 'South', 'West'][direction]}</div>
-                            <div style="height: 20px; width: 20px; border-radius: 50%; 
-                                        background-color: ${isGreen ? '#4CAF50' : '#F44336'};
-                                        margin-top: 5px;"></div>
-                            ${i === currentGreen ? '<div style="color: green; font-weight: bold;">CURRENTLY GREEN</div>' : ''}
-                        </div>
-                    `;
-                }
-            }
-            html += '</div>';
-            container.innerHTML = html;
-        }
 
-        function updateBottleneckPredictions(predictionData) {
-            const container = document.getElementById('bottleneck-predictions');
-            if (!predictionData || !container) return;
-            
-            let html = '';
-            
-            if (predictionData.bottlenecks && predictionData.bottlenecks.length > 0) {
-                html += '<div style="color: #d32f2f; font-weight: bold;">Active Bottlenecks Detected:</div>';
-                predictionData.bottlenecks.forEach(bottleneck => {
-                    const severityClass = bottleneck.severity === 'high' ? 'bottleneck-high' : 'bottleneck-medium';
-                    html += `
-                        <div class="${severityClass}">
-                            <div><strong>${bottleneck.location}</strong> (${bottleneck.severity} severity)</div>
-                            <div>Expected delay: ${bottleneck.expected_delay}</div>
-                            <div>Recommendation: ${bottleneck.recommendation}</div>
-                        </div>
-                    `;
-                });
-            } else {
-                html = '<div style="color: #4CAF50;">No major bottlenecks predicted. Traffic flowing normally.</div>';
-            }
-            
-            container.innerHTML = html;
-        }
-
-        function updateIoTData(sensorData) {
-            const container = document.getElementById('iot-data');
-            if (!sensorData || !container) return;
-            
-            // Determine weather icon
-            let weatherIcon = '☀️'; // default
-            if (sensorData.weather === 'rain') weatherIcon = '🌧️';
-            if (sensorData.weather === 'fog') weatherIcon = '🌫️';
-            
-            // Determine road condition icon
-            let roadIcon = '🟢'; // default
-            if (sensorData.road_conditions === 'wet') roadIcon = '💧';
-            if (sensorData.road_conditions === 'icy') roadIcon = '❄️';
-            
-            // Determine air quality color
-            let airQualityColor = '#4CAF50'; // good
-            if (sensorData.air_quality > 100) airQualityColor = '#FF9800'; // moderate
-            if (sensorData.air_quality > 150) airQualityColor = '#F44336'; // poor
-            
-            const html = `
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <div>${weatherIcon} Weather: ${sensorData.weather}</div>
-                    <div>${roadIcon} Road: ${sensorData.road_conditions}</div>
-                    <div>🚑 Emergency: ${sensorData.emergency_vehicle ? 'Detected' : 'None'}</div>
-                    <div>🌬️ Air Quality: <span style="color: ${airQualityColor};">${sensorData.air_quality}</span></div>
-                </div>
-            `;
-            
-            container.innerHTML = html;
-        }
-        
-        function controlSignal() {
-            const intersection = document.getElementById('intersection-select').value;
-            const direction = document.getElementById('direction-select').value;
-            const duration = document.getElementById('duration-input').value;
-            
-            fetch('/api/control_signal', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
+            // Vehicle Distribution Chart (unchanged)
+            const vehicleCtx = document.getElementById('vehicleChart').getContext('2d');
+            const vehicleChart = new Chart(vehicleCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Cars', 'Trucks', 'Motorcycles', 'Buses', 'Other'],
+                    datasets: [{
+                        data: vehicleData,
+                            backgroundColor: [
+                                '#3182ce',
+                            '#38a169',
+                            '#d69e2e',
+                            '#e53e3e',
+                            '#805ad5'
+                        ],
+                        borderWidth: 0
+                    }]
                 },
-                body: JSON.stringify({
-                    intersection: parseInt(intersection),
-                    direction: parseInt(direction),
-                    duration: parseInt(duration)
-                })
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        }
+                    },
+                    cutout: '70%'
+                }
+            });
+
+            // Traffic Over Time Chart - UPDATED to use time-based labels
+            const trafficCtx = document.getElementById('trafficChart').getContext('2d');
+            const trafficChart = new Chart(trafficCtx, {
+                type: 'line',
+                data: {
+                    labels: timeLabels, // Now using time-based labels
+                    datasets: [{
+                        label: 'Vehicle Count',
+                        data: trafficData,
+                        borderColor: '#3182ce',
+                        backgroundColor: 'rgba(49, 130, 206, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Store chart references for updating
+            window.trafficChart = trafficChart;
+            window.vehicleChart = vehicleChart;
+        }
+        
+        // Update charts dynamically
+        // Update charts dynamically
+        function updateCharts() {
+            // Add new traffic data point
+            const currentTraffic = Math.floor(Math.random() * 100) + 50;
+            trafficData.push(currentTraffic);
+    
+            // Keep only the last 8 data points
+            if (trafficData.length > 8) {
+                trafficData.shift();
+            }
+
+            // Update vehicle distribution data
+            vehicleData[0] += Math.floor(Math.random() * 10); // Cars
+            vehicleData[1] += Math.floor(Math.random() * 5);  // Trucks
+            vehicleData[2] += Math.floor(Math.random() * 8);  // Motorcycles
+            vehicleData[3] += Math.floor(Math.random() * 3);  // Buses
+            vehicleData[4] += Math.floor(Math.random() * 4);  // Other
+
+            // Update chart labels with current time (like admin_dashboard.html)
+            const now = new Date();
+            const timeLabels = [];
+            for (let i = 7; i >= 0; i--) {
+                const time = new Date(now);
+                time.setMinutes(time.getMinutes() - i * 15);
+                timeLabels.push(time.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}));
+            }
+
+            // Update charts if they exist
+            if (window.trafficChart) {
+                window.trafficChart.data.labels = timeLabels;
+                window.trafficChart.data.datasets[0].data = trafficData;
+                window.trafficChart.update();
+            }
+
+            if (window.vehicleChart) {
+                window.vehicleChart.data.datasets[0].data = vehicleData;
+                window.vehicleChart.update();
+            }
+        }    
+
+        // Initialize signal status
+        function initSignalStatus() {
+            const signals = [
+                { direction: 'North-South', status: 'green' },
+                { direction: 'East-West', status: 'red' },
+                { direction: 'North-East', status: 'red' },
+                { direction: 'South-West', status: 'green' }
+            ];
+            
+            const container = document.getElementById('signal-status-container');
+            container.innerHTML = '';
+            
+            signals.forEach(signal => {
+                const signalItem = document.createElement('div');
+                signalItem.className = `signal-item ${signal.status === 'green' ? 'active' : ''}`;
+                signalItem.innerHTML = `
+                    <div class="signal-direction">${signal.direction}</div>
+                    <div class="signal-indicator ${signal.status === 'green' ? 'signal-green' : 'signal-red'}"></div>
+                    <div class="signal-active">${signal.status === 'green' ? 'ACTIVE' : 'INACTIVE'}</div>
+                `;
+                container.appendChild(signalItem);
             });
         }
         
-        // Update dashboard every 5 seconds
-        setInterval(updateDashboard, 5000);
-        updateDashboard();
+        // Simulate data updates
+        function updateData() {
+            // Update statistics
+            const currentVehicles = Math.floor(Math.random() * 100) + 50;
+            document.getElementById('current-vehicles').textContent = currentVehicles;
+            
+            // Update total vehicles (always increasing)
+            totalVehiclesCount += currentVehicles;
+            document.getElementById('total-vehicles').textContent = totalVehiclesCount;
+            
+            document.getElementById('avg-speed').textContent = Math.floor(Math.random() * 40) + 20;
+            document.getElementById('signal-efficiency').textContent = Math.floor(Math.random() * 20) + 80 + '%';
+            document.getElementById('commute-reduction').textContent = Math.floor(Math.random() * 15) + 10 + '%';
+            
+            // Update last updated time
+            const now = new Date();
+            const timeString = now.toLocaleTimeString();
+            document.getElementById('last-updated').textContent = timeString;
+            document.getElementById('last-updated-sidebar').textContent = timeString;
+            
+            // Randomly update congestion level
+            const levels = ['Low', 'Moderate', 'High'];
+            document.getElementById('congestion-level').textContent = levels[Math.floor(Math.random() * 3)];
+            
+            // Update IoT values occasionally
+            if (Math.random() > 0.7) {
+                const weatherOptions = ['Clear', 'Cloudy', 'Rainy', 'Foggy'];
+                const roadOptions = ['Dry', 'Wet', 'Icy'];
+                const emergencyOptions = ['None', 'Ambulance', 'Fire', 'Police'];
+                const airOptions = ['Good', 'Moderate', 'Poor'];
+                
+                document.getElementById('weather-value').textContent = weatherOptions[Math.floor(Math.random() * weatherOptions.length)];
+                document.getElementById('road-value').textContent = roadOptions[Math.floor(Math.random() * roadOptions.length)];
+                document.getElementById('emergency-value').textContent = emergencyOptions[Math.floor(Math.random() * emergencyOptions.length)];
+                document.getElementById('air-value').textContent = airOptions[Math.floor(Math.random() * airOptions.length)];
+            }
+            
+            // Update charts with new data
+            updateCharts();
+        }
+        
+        // Show notification
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.className = `notification ${type} show`;
+            notification.querySelector('.notification-message').textContent = message;
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Stop processing function
+        function stopProcessing() {
+            showNotification('All processing has been stopped.', 'error');
+            document.getElementById('video-status').textContent = 'Inactive';
+            document.getElementById('video-status').style.color = '#e53e3e';
+            document.getElementById('data-status').textContent = 'Inactive';
+            document.getElementById('data-status').style.color = '#e53e3e';
+        }
+        
+        // Initialize everything when page loads
+        window.onload = function() {
+            initCharts();
+            initSignalStatus();
+            updateData();
+            
+            // Update data every 5 seconds
+            setInterval(updateData, 5000);
+            
+            // Simulate a bottleneck notification after 10 seconds
+            setTimeout(() => {
+                const bottleneckContainer = document.getElementById('bottleneck-predictions');
+                bottleneckContainer.innerHTML = `
+                    <div class="bottleneck-item bottleneck-high">
+                        <div class="bottleneck-header">
+                            <div class="bottleneck-location">
+                                <i class="fas fa-exclamation-circle"></i>
+                                Master Canteen Intersection
+                            </div>
+                            <span class="bottleneck-severity severity-high">High</span>
+                        </div>
+                        <div class="bottleneck-details">
+                            Expected congestion in 15 minutes. Current traffic buildup increasing.
+                        </div>
+                        <div class="bottleneck-recommendation">
+                            Recommendation: Increase green light duration for East-West direction by 25 seconds.
+                        </div>
+                    </div>
+                    <div class="bottleneck-item bottleneck-medium">
+                        <div class="bottleneck-header">
+                            <div class="bottleneck-location">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                Kalpana Square
+                            </div>
+                            <span class="bottleneck-severity severity-medium">Medium</span>
+                        </div>
+                        <div class="bottleneck-details">
+                            Moderate congestion building due to ongoing construction.
+                        </div>
+                        <div class="bottleneck-recommendation">
+                            Recommendation: Deploy traffic officer and consider alternate routes.
+                        </div>
+                    </div>
+                `;
+                
+                showNotification('New traffic bottleneck predicted at Master Canteen Intersection', 'error');
+            }, 10000);
+        };
     </script>
 </body>
 </html>
